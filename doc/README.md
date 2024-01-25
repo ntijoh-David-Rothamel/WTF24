@@ -1,4 +1,4 @@
-# Projektets Namn
+# Kasinojämförelse
 
 ## Beskrivning
 
