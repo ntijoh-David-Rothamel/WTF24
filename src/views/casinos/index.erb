@@ -1,0 +1,19 @@
+<% @casinos.each do |casino| %>
+<div class="casino">
+  casino.name
+  <% casino.rating.each do |stars| %>
+    <div class="star">
+      <p>star</p>
+    </div>
+  <% end %>
+
+  <img src="<%=casino.logo%>" alt="<%=casino.name %>\'s logo">
+
+  <% casino.cats.each do |cats| %>
+  <div class="cats">
+    <p><%=cats %></p>
+  </div>
+  <% end %>
+
+</div>
+<% end %>

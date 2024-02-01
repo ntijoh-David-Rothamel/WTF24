@@ -27,23 +27,34 @@ class Seeder
     
     def self.create_tables
         puts "  * Creating tables"
-        db.execute('CREATE TABLE movies(
+        db.execute('CREATE TABLE casinos(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
-            description TEXT,
-            director TEXT,
-            year TEXT
+            win_stats INTEGER,
+            turnover INTEGER,
+            logo_filepath TEXT
+        )')
+
+        db.execute('CREATE TABLE casino_cats(
+            id_casino INTEGER,
+            id_cat INTEGER
+        )')
+
+        db.execute('CREATE TABLE cats(
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             name TEXT
         )')
     end
     
     def self.seed_data
         puts "  * Seeding tables"
-        movies = [
-            {name: 'testmovie 1'},
+
+        casinos = [
+            {name: 'Hippity Hoppity money gone', win_stats: '0.92', turnover: '2', logo_filepath: 'public/img/casino'},
         ]
-    
-        movies.each do |contact|
-            db.execute('INSERT INTO movies (name) VALUES (?)', contact[:name])
+
+        casinos.each do |casino|
+            db.execute('INSERT INTO casinos (name, win_stats, turnover, logo_filepath) VALUES (?,?,?,?)', casino[:name], casino[:win_stats], casino[:turnover], casino[:logo_filepath])
         end
     end
 end

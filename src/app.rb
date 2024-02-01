@@ -1,4 +1,5 @@
 class App < Sinatra::Base
+  require '../src/db/seed'
 
     def db
         if @db == nil
@@ -9,7 +10,11 @@ class App < Sinatra::Base
     end
 
     get '/' do
-      redirect '/users'
+      redirect '/casinos'
+    end
+
+    get '/casinos' do
+      erb :'casinos/index'
     end
 
     get '/users' do
@@ -20,5 +25,8 @@ class App < Sinatra::Base
       erb :'users/signin'
     end
     
-    
+    get '/seed' do
+      Seeder.seed!
+      redirect '/users'
+    end
 end
