@@ -1,0 +1,50 @@
+<!--
+Use this as edit page as well
+-->
+<form action="/casinos" method="post">
+  <label>
+    Kasino namn
+    <br/>
+    <input type="text" name="casino_name" required/>
+    <br/>
+  </label>
+  <label>
+    Vinst statistik
+    <br/>
+    <input type="text" name="win_stats" required/>
+    <br/>
+  </label>
+  <label>
+    Omsättningskrav
+    <br/>
+    <input type="number" name="turnover" required/>
+    <br/>
+  </label>
+  <label>
+    Logga som viss filtyp(Lista ut vilken)
+    <br/>
+    <input type="text" name="logo_filepath" />
+    <br/>
+  </label>
+  <label>
+    Rating
+    <br/>
+    <input type="text" name="Rating" required/>
+    <br/>
+  </label>
+  <label>
+    Ändra så att den radar upp tidigare tillagda kategorier
+    Och en knapp för att ta bort kategorin
+    Ladda om sidan om man lägger till eller tar bort
+    <br/>
+    <input list="cats" type="text" name="cats" required/>
+    <br/>
+  </label>
+  <button type="submit">Lägg till kasino</button>
+</form>
+
+<datalist id="cats">
+  <%@cats.each do |cat| %>
+    <option value="<%= cat['name_cats']%>"></option>
+  <% end %>
+</datalist>

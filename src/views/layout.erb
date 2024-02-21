@@ -6,6 +6,14 @@
     <title>Document</title>
 </head>
 <body>
+    <header>
+        <!-- Add if cases depending on who is logged in-->
+        <a href="casinos/index.erb">Admin stuff</a>
+        <a>Account</a>
+        <a href="casinos/index.erb">Kasino jämförare</a>
+        <a href="users/index.erb">Log in</a>
+        <a href="users/signin.erb">Sign in</a>
+    </header>
     <%= yield %>
 </body>
 </html>
