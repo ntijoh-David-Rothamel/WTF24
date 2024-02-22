@@ -36,7 +36,8 @@ class App < Sinatra::Base
 
   get '/casinos/new' do
     @cats = db.execute('SELECT * FROM cats')
-    erb :'casinos/new'
+    @casino = [{'name'=>'', 'win_stats'=>'', 'turn_over'=>'', 'logo_filepath'=>'','rating'=>''}]
+    erb :'casinos/edit'
   end
 
   get '/casinos/:id' do |id|
