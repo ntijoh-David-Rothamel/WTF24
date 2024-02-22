@@ -44,28 +44,29 @@ class App < Sinatra::Base
     redirect "/"
   end
 
-
   get '/casinos/:id/edit' do |id|
     query = '
       SELECT *
       FROM casinos
       LEFT JOIN casinos_cats ON casinos.id = casinos_cats.id_casino
       LEFT JOIN cats ON casinos_cats.id_cat = cats.id
-      WHERE id=?'
+      WHERE id_casino=?'
 
     @casino = db.execute(query, id)
 
     p @casino
 
-    erb :'casinos/new'
+    @cats = db.execute('SELECT * FROM cats')
+
+    erb :'/casinos/edit'
   end
 
   get '/users' do
-    erb :'users/index'
+    erb :'/users/index'
   end
 
   get '/users/new' do
-    erb :'users/signin'
+    erb :'/users/signin'
   end
 
   get '/seed' do
@@ -85,6 +86,12 @@ class App < Sinatra::Base
     (name, win_stats, turnover, logo_filepath, rating)
     VALUES (?,?,?,?,?) RETURNING id'
 
+    query_update_casino = '
+    UPDATE casinos
+    SET win_stats=?, turnover=?, logo_filepath=?, rating=?
+    WHERE name=?
+    RETURNING id'
+
     query_cats = '
     INSERT INTO cats
     (name_cats)
@@ -95,17 +102,24 @@ class App < Sinatra::Base
     (id_casino, id_cat)
     VALUES (?,?)'
 
-    casino_id = db.execute(query_casino, casino_values).first
+    check = db.execute('SELECT id FROM casinos WHERE name=?', casino['casino_name']).first
+
+    if check.nil?
+      casino_id = db.execute(query_casino, casino_values).first
+    else
+      casino_values.delete_at(0)
+      casino_id = db.execute(query_update_casino, casino_values, casino['casino_name']).first
+    end
 
     cats_id = db.execute('SELECT id FROM cats WHERE name_cats=?', params['cats']).first
 
-    if cats_id[0].nil?
+    if cats_id.nil?
       cats_id = db.execute(query_cats, params['cats']).first
     end
 
     db.execute(query_cats_casino, casino_id['id'], cats_id['id'])
 
-    redirect '/casinos/new'
+    redirect "/casinos/#{casino_id['id']}/edit"
   end
 
   def sort_cats(hash_of_cats)
@@ -117,6 +131,7 @@ class App < Sinatra::Base
       end
       array_of_cats[cats['id_casino'].to_s].append(cats['name_cats'])
     end
+
     array_of_cats
   end
 end

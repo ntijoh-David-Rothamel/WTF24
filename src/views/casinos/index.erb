@@ -1,23 +1,24 @@
 <% @casinos.each do |casino| %>
-<div class="casino">
-  <%=casino['name'] %>
-  <% (0..casino['rating']).each do |_| %>
-    <div class="star">
-            <p>star</p>
+    <div class="casino">
+      <%=casino['name'] %>
+      <% (0..casino['rating']).each do |_| %>
+        <div class="star">
+                <p>star</p>
+        </div>
+      <% end %>
+
+      <img src="<%=casino['logo_filepath']%>" alt="<%=casino['name'] %>'s logo">
+
+      <%puts "web info" %>
+      <%p @casinos_cats %>
+
+      <%p casino['id'] %>
+
+      <% @casinos_cats[casino['id'].to_s].each do |cats| %>
+        <div class="cats">
+          <p><%=cats %></p>
+        </div>
+      <% end %>
+      <a href="casinos/<%=casino['id']%>/edit">edit</a>
     </div>
-  <% end %>
-
-  <img src="<%=casino['logo_filepath']%>" alt="<%=casino['name'] %>'s logo">
-
-  <%puts "web info" %>
-  <%p @casinos_cats %>
-
-  <%p casino['id'] %>
-
-  <% @casinos_cats[casino['id'].to_s].each do |cats| %>
-    <div class="cats">
-      <p><%=cats %></p>
-    </div>
-  <% end %>
-</div>
 <% end %>
