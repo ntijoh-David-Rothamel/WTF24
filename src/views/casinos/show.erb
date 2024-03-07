@@ -1,0 +1,49 @@
+<!--
+Should show a little bit of casino info
+-->
+
+<h1><%=@casino['name'] %></h1>
+
+<p><%=@casino['id'] %></p>
+
+<p><%=@casino['rating'] %></p>
+
+<form action="/reviews" method="post">
+  <label>
+    title
+    <br/>
+    <input type="text" name="title"/>
+    <br/>
+  </label>
+  <label>
+    text
+    <br/>
+    <textarea name="text"></textarea>
+    <br/>
+  </label>
+  <label>
+    stars 1-5
+    <br/>
+    <input type="number" name="stars"/>
+    <br/>
+  </label>
+  <label>
+    <input type="hidden" name="parent" value="0"/>
+  </label>
+  <label>
+    <input type="hidden" name="casino_id" value="<%=@casino['id'] %>"/>
+  </label>
+  <label>
+    <input type="submit">
+  </label>
+</form>
+
+<% @reviews.each do |rev| %>
+  <div>
+    <h3> <%= rev['title'] %></h3>
+    <% (0...rev['stars']).each do || %>
+      *
+    <% end %>
+    <p><%=rev['text'] %></p>
+  </div>
+<% end %>

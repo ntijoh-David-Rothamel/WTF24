@@ -1,6 +1,8 @@
 class App < Sinatra::Base
   require '../src/db/seed'
 
+  enable :sessions
+
   def db
     if @db.nil?
       @db = SQLite3::Database.new('./db/db.sqlite')
@@ -36,13 +38,18 @@ class App < Sinatra::Base
 
   get '/casinos/new' do
     @cats = db.execute('SELECT * FROM cats')
-    @casino = [{'name'=>'', 'win_stats'=>'', 'turn_over'=>'', 'logo_filepath'=>'','rating'=>''}]
+    @casino = [{ 'name' => '', 'win_stats' => '', 'turn_over' => '', 'logo_filepath' => '', 'rating' => '' }]
     erb :'casinos/edit'
   end
 
   get '/casinos/:id' do |id|
-    puts id
-    redirect "/"
+    @casino = db.execute('SELECT * FROM casinos WHERE id=?', id).first
+
+    p @casino
+
+    @reviews = db.execute('SELECT * FROM reviews WHERE casino_id=?', id)
+
+    erb :'/casinos/show'
   end
 
   get '/casinos/:id/edit' do |id|
@@ -123,6 +130,57 @@ class App < Sinatra::Base
     redirect "/casinos/#{casino_id['id']}/edit"
   end
 
+  post '/reviews' do
+    values = params.values
+    p values
+    p params
+
+    query = '
+    INSERT INTO reviews
+    (title, text, stars, parent, casino_id)
+    VALUES (?,?,?,?,?)'
+
+    query_get_rating = '
+    SELECT rating, rev_amount, id
+    FROM casinos'
+
+    query_set_rating = '
+    UPDATE casinos
+    SET rating=?, rev_amount=?
+    WHERE id=?'
+
+    rating_values = db.execute(query_get_rating).first
+
+    rating_values['rating'] = (rating_values['rating'].to_i * rating_values['rev_amount'].to_i + params['stars'].to_i) / (rating_values['rev_amount'].to_i + 1)
+
+    rating_values['rev_amount'] = 1 + rating_values['rev_amount'].to_i
+
+    db.execute(query, values)
+
+    db.execute(query_set_rating, rating_values['rating'], rating_values['rev_amount'], rating_values['id'])
+
+    redirect "/casinos/#{values[-1]}"
+  end
+
+  post '/users' do
+    username = params['username']
+    clear_pass = params['password']
+
+
+  end
+
+  post '/users/new' do
+    password = BCrypt::Password.create(params['password'])
+
+    query = '
+    INSERT INTO users
+    (name, password, email)
+    VALUES (?,?,?)'
+
+    db.execute(query, params['username'], password, params['email'])
+
+    redirect '/users'
+  end
   def sort_cats(hash_of_cats)
     array_of_cats = {}
 
@@ -134,5 +192,10 @@ class App < Sinatra::Base
     end
 
     array_of_cats
+  end
+
+  def sort_revs(hash_of_revs)
+    #Should sort the rev elements in a way
+    # so that
   end
 end

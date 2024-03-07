@@ -1,6 +1,6 @@
 <% @casinos.each do |casino| %>
     <div class="casino">
-      <%=casino['name'] %>
+      <a href="/casinos/<%=casino['id'] %>"><%=casino['name'] %></a>
       <% (0..casino['rating']).each do |_| %>
         <div class="star">
                 <p>star</p>
