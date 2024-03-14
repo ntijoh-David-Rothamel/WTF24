@@ -33,19 +33,28 @@ class App < Sinatra::Base
 
     p @casinos_cats
 
-    erb :'casinos/index'
+    erb :'/casinos/index'
   end
 
   get '/casinos/new' do
     @cats = db.execute('SELECT * FROM cats')
     @casino = [{ 'name' => '', 'win_stats' => '', 'turn_over' => '', 'logo_filepath' => '', 'rating' => '' }]
-    erb :'casinos/edit'
+    erb :'/casinos/edit'
   end
 
   get '/casinos/:id' do |id|
-    @casino = db.execute('SELECT * FROM casinos WHERE id=?', id).first
+    user_id = session[:user_id]
 
-    p @casino
+
+    user_query = "
+    SELECT * FROM users
+    LEFT JOIN users_roles ON users.id = users_roles.user_id
+    LEFT JOIN roles ON users_roles.role_id = roles.id
+    WHERE users.id=?"
+
+    @user = db.execute(user_query, user_id).first
+
+    @casino = db.execute('SELECT * FROM casinos WHERE id=?', id).first
 
     @reviews = db.execute('SELECT * FROM reviews WHERE casino_id=?', id)
 
@@ -75,6 +84,12 @@ class App < Sinatra::Base
 
   get '/users/new' do
     erb :'/users/signin'
+  end
+
+  get '/users/logout' do
+    session.destroy
+
+    redirect '/'
   end
 
   get '/seed' do
@@ -166,7 +181,16 @@ class App < Sinatra::Base
     username = params['username']
     clear_pass = params['password']
 
+    user = db.execute('SELECT * FROM users WHERE name = ?', username).first
 
+    pass_db = BCrypt::Password.new(user['password'])
+
+    if pass_db == clear_pass
+      session[:user_id] = user['id']
+      redirect "/"
+    else
+      redirect "/users"
+    end
   end
 
   post '/users/new' do
@@ -181,6 +205,7 @@ class App < Sinatra::Base
 
     redirect '/users'
   end
+
   def sort_cats(hash_of_cats)
     array_of_cats = {}
 

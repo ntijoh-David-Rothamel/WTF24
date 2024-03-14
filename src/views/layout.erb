@@ -14,10 +14,11 @@
         <a>Account</a>
         <a href="/">Kasino jämförare</a>
         <a href="/users">Log in</a>
+        <a href="/users/logout">Log out</a>
         <a href="/users/new">Sign in</a>
         <a href="/casinos/new">Add kasino</a>
-        <%if @user_name.nil? %>
-            <a>USER <%= @user_name %></a>
+        <%if !@user.nil? %>
+            <a>USER <%= @user['name'] %></a>
         <%end %>
     </header>
     <%= yield %>

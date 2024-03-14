@@ -1,0 +1,8 @@
+Triple \n for new category
+Double \n for new item
+
+Sign in
+Check if both passwords are the same else return error
+
+
+Common
