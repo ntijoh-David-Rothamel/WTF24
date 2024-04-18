@@ -1,3 +1,13 @@
 body {
+    margin: 0;
     font-family: "Comic Sans MS", sans-serif;
+}
+
+header {
+    height: 10vh;
+    width: 100vw;
+    background-color: dimgray;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
 }

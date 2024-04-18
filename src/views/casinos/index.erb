@@ -9,16 +9,13 @@
 
       <img src="<%=casino['logo_filepath']%>" alt="<%=casino['name'] %>'s logo">
 
-      <%puts "web info" %>
-      <%p @casinos_cats %>
-
-      <%p casino['id'] %>
-
       <% @casinos_cats[casino['id'].to_s].each do |cats| %>
         <div class="cats">
           <p><%=cats %></p>
         </div>
       <% end %>
-      <a href="casinos/<%=casino['id']%>/edit">edit</a>
+      <%if !@user.nil? && @user['make'].to_i == 1%>
+        <a href="casinos/<%=casino['id']%>/edit">edit</a>
+      <%end %>
     </div>
 <% end %>

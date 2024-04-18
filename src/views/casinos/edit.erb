@@ -3,28 +3,30 @@ Use this as edit page as well
 -->
 
 <form action="/casinos" method="post">
+  <input type='hidden' name='id' value='<%=@casino['id'] %>'/>
+
   <label>
   Kasino namn
     <br/>
-  <input type="text" name="casino_name" value="<%=@casino[0]['name'] %>" required/>
+  <input type="text" name="casino_name" value="<%=@casino['name'] %>" required/>
     <br/>
   </label>
   <label>
     Vinst statistik
     <br/>
-    <input type="text" name="win_stats" value="<%=@casino[0]['win_stats'] %>" required/>
+    <input type="text" name="win_stats" value="<%=@casino['win_stats'] %>" required/>
     <br/>
   </label>
   <label>
     Omsättningskrav
     <br/>
-    <input type="number" name="turnover" value="<%=@casino[0]['turnover'] %>" required/>
+    <input type="number" name="turnover" value="<%=@casino['turnover'] %>" required/>
     <br/>
   </label>
   <label>
     Logga som viss filtyp(Lista ut vilken)
     <br/>
-    <input type="text" name="logo_filepath" value="<%=@casino[0]['logo_filepath'] %>" />
+    <input type="text" name="logo_filepath" value="<%=@casino['logo_filepath'] %>" />
     <br/>
   </label>
   <label>

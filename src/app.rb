@@ -1,88 +1,69 @@
+require_relative 'models/casino'
+
 class App < Sinatra::Base
   require '../src/db/seed'
 
   enable :sessions
 
-  def db
-    if @db.nil?
-      @db = SQLite3::Database.new('./db/db.sqlite')
-      @db.results_as_hash = true
-    end
-    return @db
-  end
-
   get '/' do
     redirect '/casinos'
   end
 
+  get '/test' do
+    erb :'/casinos/test'
+  end
+
   get '/casinos' do
-    @casinos = db.execute(
-      'SELECT * FROM casinos'
-    )
+    @user = User.by_session_id
 
-    casinos_cats = db.execute(
-      'SELECT id_casino, cats.name_cats, casinos.name
-      FROM casinos
-      LEFT JOIN casinos_cats ON casinos.id = casinos_cats.id_casino
-      LEFT JOIN cats ON casinos_cats.id_cat = cats.id'
-    )
+    @casinos = Casino.all
 
-    p casinos_cats
-
+    casinos_cats = Casino.all_with_cats
+    #TODO Move sort to models
     @casinos_cats = sort_cats(casinos_cats)
-
-    p @casinos_cats
 
     erb :'/casinos/index'
   end
 
   get '/casinos/new' do
-    @cats = db.execute('SELECT * FROM cats')
-    @casino = [{ 'name' => '', 'win_stats' => '', 'turn_over' => '', 'logo_filepath' => '', 'rating' => '' }]
+    @user = User.by_session_id
+
+    @cats = Casino.all_cats
+
+    @casino = [{'id' => nil, 'name' => '', 'win_stats' => '', 'turn_over' => '', 'logo_filepath' => '', 'rating' => '' }]
+
     erb :'/casinos/edit'
   end
 
   get '/casinos/:id' do |id|
-    user_id = session[:user_id]
+    @user = User.by_session_id
 
+    @casino = Casino.select(id).first
 
-    user_query = "
-    SELECT * FROM users
-    LEFT JOIN users_roles ON users.id = users_roles.user_id
-    LEFT JOIN roles ON users_roles.role_id = roles.id
-    WHERE users.id=?"
-
-    @user = db.execute(user_query, user_id).first
-
-    @casino = db.execute('SELECT * FROM casinos WHERE id=?', id).first
-
-    @reviews = db.execute('SELECT * FROM reviews WHERE casino_id=?', id)
+    @reviews = Review.all_at_casino(id)
 
     erb :'/casinos/show'
   end
 
   get '/casinos/:id/edit' do |id|
-    query = '
-      SELECT *
-      FROM casinos
-      LEFT JOIN casinos_cats ON casinos.id = casinos_cats.id_casino
-      LEFT JOIN cats ON casinos_cats.id_cat = cats.id
-      WHERE id_casino=?'
+    @user = User.by_session_id
 
-    @casino = db.execute(query, id)
+    @casino = Casino.by_id_with_cats(id)
 
-    p @casino
-
-    @cats = db.execute('SELECT * FROM cats')
+    @cats = Casino.all_cats
 
     erb :'/casinos/edit'
   end
 
   get '/users' do
+    @user = User.by_session_id
+
     erb :'/users/index'
   end
 
   get '/users/new' do
+    @user = User.by_session_id
+
     erb :'/users/signin'
   end
 
@@ -92,77 +73,67 @@ class App < Sinatra::Base
     redirect '/'
   end
 
+  get '/users/edit' do
+    @user = User.by_session_id
+
+    @users = User.all_users
+
+    @roles = User.all_roles
+
+    erb :'/users/edit'
+  end
+
   get '/seed' do
     Seeder.seed!
     redirect '/users'
   end
 
   post '/casinos' do
+    id = Casino.update_or_create(params['id'], params)
+
+    Cats.new(params['cats'], id)
+
+    redirect "/casinos/#{id}/edit"
+  end
+
+  post '/casinos' do
     casino = params.dup
     casino.delete('cats')
-    casino.delete('submit')
+
+    #TODO should not require removal of submit
+    # Just remove value from submit
+    #casino.delete('submit')
 
     casino_values = casino.values
 
-    query_casino = '
-    INSERT INTO casinos
-    (name, win_stats, turnover, logo_filepath, rating)
-    VALUES (?,?,?,?,?) RETURNING id'
+    #TODO set default values for rating and rev_amount to zero
 
-    query_update_casino = '
-    UPDATE casinos
-    SET win_stats=?, turnover=?, logo_filepath=?, rating=?
-    WHERE name=?
-    RETURNING id'
+    check = Casino.select_at_name(casino['casino_name']).first
 
-    query_cats = '
-    INSERT INTO cats
-    (name_cats)
-    VALUES (?) RETURNING id'
-
-    query_cats_casino = '
-    INSERT INTO casinos_cats
-    (id_casino, id_cat)
-    VALUES (?,?)'
-
-    check = db.execute('SELECT id FROM casinos WHERE name=?', casino['casino_name']).first
+    #TODO This logic should be put into the model
 
     if check.nil?
-      casino_id = db.execute(query_casino, casino_values).first
+      casino_id = Casino.new_casino(casino_values).first
     else
       casino_values.delete_at(0)
-      casino_id = db.execute(query_update_casino, casino_values, casino['casino_name']).first
+      casino_id = Casino.update_casino(casino_values, casino['casino_name']).first
     end
 
-    cats_id = db.execute('SELECT id FROM cats WHERE name_cats=?', params['cats']).first
+    cats_id = Casino.select_cat_at_name(params['cats']).first
 
     if cats_id.nil?
-      cats_id = db.execute(query_cats, params['cats']).first
+      cats_id = Casino.new_cat(params['cats']).first
     end
 
-    db.execute(query_cats_casino, casino_id['id'], cats_id['id'])
+    Casino.new_casino_cat(casino_id['id'], cats_id['id'])
 
     redirect "/casinos/#{casino_id['id']}/edit"
   end
 
   post '/reviews' do
     values = params.values
-    p values
-    p params
 
-    query = '
-    INSERT INTO reviews
-    (title, text, stars, parent, casino_id)
-    VALUES (?,?,?,?,?)'
-
-    query_get_rating = '
-    SELECT rating, rev_amount, id
-    FROM casinos'
-
-    query_set_rating = '
-    UPDATE casinos
-    SET rating=?, rev_amount=?
-    WHERE id=?'
+    query_get_rating =
 
     rating_values = db.execute(query_get_rating).first
 
@@ -170,18 +141,25 @@ class App < Sinatra::Base
 
     rating_values['rev_amount'] = 1 + rating_values['rev_amount'].to_i
 
-    db.execute(query, values)
+    Review.new(values)
 
     db.execute(query_set_rating, rating_values['rating'], rating_values['rev_amount'], rating_values['id'])
 
     redirect "/casinos/#{values[-1]}"
   end
 
+  post '/reviews' do
+    Review.new(params.values)
+
+    Casino.set_rating(params['parent'], params['stars'])
+  end
+
+
   post '/users' do
     username = params['username']
     clear_pass = params['password']
 
-    user = db.execute('SELECT * FROM users WHERE name = ?', username).first
+    user = db.execute('SELECT * FROM users WHERE username = ?', username).first
 
     pass_db = BCrypt::Password.new(user['password'])
 
@@ -196,16 +174,51 @@ class App < Sinatra::Base
   post '/users/new' do
     password = BCrypt::Password.create(params['password'])
 
-    query = '
+    query_user = '
     INSERT INTO users
-    (name, password, email)
-    VALUES (?,?,?)'
+    (username, password, email)
+    VALUES (?,?,?)
+    RETURNING id'
 
-    db.execute(query, params['username'], password, params['email'])
+    query_user_role = '
+    INSERT INTO users_roles
+    (user_id, role_id)
+    VALUES (?,?)'
+
+    user_id = db.execute(query_user, params['username'], password, params['email']).first
+
+    # Pray that I don't change the id of user
+    db.execute(query_user_role, user_id[0], 4)
 
     redirect '/users'
   end
 
+  post '/users/edit' do
+    #TODO maybe download hole db just one time
+    # instead of loading just the id i need
+    # what is faster?
+
+    query_role = '
+    SELECT id FROM roles
+    WHERE rolename=?'
+
+    query_user_role = '
+    UPDATE users_roles
+    SET role_id=?
+    WHERE user_id=?'
+
+    p params
+
+    params.each do |role|
+      role_id = db.execute(query_role, role[1]).first
+
+      p role_id
+
+      db.execute(query_user_role, role_id['id'], role[0])
+    end
+
+    redirect '/users/edit'
+  end
   def sort_cats(hash_of_cats)
     array_of_cats = {}
 
@@ -219,8 +232,8 @@ class App < Sinatra::Base
     array_of_cats
   end
 
-  def sort_revs(hash_of_revs)
-    #Should sort the rev elements in a way
-    # so that
+  def h(text)
+    Rack::Utils.escape_html(text)
   end
+
 end
