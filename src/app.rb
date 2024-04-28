@@ -1,9 +1,26 @@
 require_relative 'models/casino'
+require_relative 'models/cats'
+require_relative 'models/review'
+require_relative 'models/user'
 
 class App < Sinatra::Base
   require '../src/db/seed'
 
   enable :sessions
+
+  def db
+    if @db.nil?
+      @db = SQLite3::Database.new('./db/db.sqlite')
+      @db.results_as_hash = true
+    end
+    return @db
+  end
+
+  before do
+    @user = User.by_id(session[:user_id])
+    p 'in before'
+    p @user
+  end
 
   get '/' do
     redirect '/casinos'
@@ -14,19 +31,17 @@ class App < Sinatra::Base
   end
 
   get '/casinos' do
-    @user = User.by_session_id
+    p @user
 
     @casinos = Casino.all
 
-    casinos_cats = Casino.all_with_cats
-    #TODO Move sort to models
-    @casinos_cats = sort_cats(casinos_cats)
+    @casinos_cats = Casino.all_with_cats
 
     erb :'/casinos/index'
   end
 
   get '/casinos/new' do
-    @user = User.by_session_id
+    @user = User.by_id(@user_id)
 
     @cats = Casino.all_cats
 
@@ -36,8 +51,6 @@ class App < Sinatra::Base
   end
 
   get '/casinos/:id' do |id|
-    @user = User.by_session_id
-
     @casino = Casino.select(id).first
 
     @reviews = Review.all_at_casino(id)
@@ -46,8 +59,6 @@ class App < Sinatra::Base
   end
 
   get '/casinos/:id/edit' do |id|
-    @user = User.by_session_id
-
     @casino = Casino.by_id_with_cats(id)
 
     @cats = Casino.all_cats
@@ -56,14 +67,10 @@ class App < Sinatra::Base
   end
 
   get '/users' do
-    @user = User.by_session_id
-
     erb :'/users/index'
   end
 
   get '/users/new' do
-    @user = User.by_session_id
-
     erb :'/users/signin'
   end
 
@@ -74,8 +81,6 @@ class App < Sinatra::Base
   end
 
   get '/users/edit' do
-    @user = User.by_session_id
-
     @users = User.all_users
 
     @roles = User.all_roles
@@ -131,6 +136,12 @@ class App < Sinatra::Base
   end
 
   post '/reviews' do
+    Review.new(params.values)
+
+    Casino.set_rating(params['parent'], params['stars'])
+  end
+
+  post '/reviews' do
     values = params.values
 
     query_get_rating =
@@ -148,12 +159,13 @@ class App < Sinatra::Base
     redirect "/casinos/#{values[-1]}"
   end
 
-  post '/reviews' do
-    Review.new(params.values)
+  post '/users' do
+    #TODO Add response for wrong password or username
+    id = User.check(params)
 
-    Casino.set_rating(params['parent'], params['stars'])
+    session[:user_id] = id
+    redirect '/'
   end
-
 
   post '/users' do
     username = params['username']
@@ -169,6 +181,12 @@ class App < Sinatra::Base
     else
       redirect "/users"
     end
+  end
+
+  post '/users/new' do
+    User.new(params)
+
+    redirect '/users'
   end
 
   post '/users/new' do
@@ -191,6 +209,10 @@ class App < Sinatra::Base
     db.execute(query_user_role, user_id[0], 4)
 
     redirect '/users'
+  end
+
+  post '/users/edit' do
+    User.edit(params)
   end
 
   post '/users/edit' do
@@ -218,18 +240,6 @@ class App < Sinatra::Base
     end
 
     redirect '/users/edit'
-  end
-  def sort_cats(hash_of_cats)
-    array_of_cats = {}
-
-    hash_of_cats.each do |cats|
-      if array_of_cats[cats['id_casino'].to_s].nil?
-        array_of_cats[cats['id_casino'].to_s] = []
-      end
-      array_of_cats[cats['id_casino'].to_s].append(cats['name_cats'])
-    end
-
-    array_of_cats
   end
 
   def h(text)

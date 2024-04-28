@@ -25,13 +25,13 @@ module Casino
   end
 
   def self.all_with_cats
-    query ='
+    query = '
       SELECT id_casino, cats.name_cats, casinos.name
       FROM casinos
       LEFT JOIN casinos_cats ON casinos.id = casinos_cats.id_casino
       LEFT JOIN cats ON casinos_cats.id_cat = cats.id'
 
-    db.execute(query)
+    sort_cats(db.execute(query))
   end
 
   def self.all_cats
@@ -89,26 +89,32 @@ module Casino
   end
 
   def self.set_rating(id, stars)
-    query_get = '
-    SELECT rating, rev_amount, id
-    FROM casinos
-    WHERE id=?'
-
     query_set = '
     UPDATE casinos
-    SET rating = ?, rev_amount = ?'
+    SET rating = (rating * rev_amount + ?) / rev_amount, rev_amount = rev_amount + 1
+    WHERE id=?'
 
-    #TODO add math for adjusting rating
-
-    db.execute(query_get, id)
-
+    db.execute(query_set, stars, id)
   end
 
-  def db
-    if db.nil?
-      db = SQLite3::Database.new('./db/db.sqlite')
-      db.results_as_hash = true
+  def self.sort_cats(hash_of_cats)
+    array_of_cats = {}
+
+    hash_of_cats.each do |cats|
+      if array_of_cats[cats['id_casino'].to_s].nil?
+        array_of_cats[cats['id_casino'].to_s] = []
+      end
+      array_of_cats[cats['id_casino'].to_s].append(cats['name_cats'])
     end
-    return db
+
+    array_of_cats
+  end
+
+  def self.db
+    if @db.nil?
+      @db = SQLite3::Database.new('./db/db.sqlite')
+      @db.results_as_hash = true
+    end
+    return @db
   end
 end

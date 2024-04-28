@@ -23,11 +23,11 @@ module Review
     db.execute(query, values)
   end
 
-  def db
-    if db.nil?
-      db = SQLite3::Database.new('./db/db.sqlite')
-      db.results_as_hash = true
+  def self.db
+    if @db.nil?
+      @db = SQLite3::Database.new('./db/db.sqlite')
+      @db.results_as_hash = true
     end
-    return db
+    return @db
   end
 end
