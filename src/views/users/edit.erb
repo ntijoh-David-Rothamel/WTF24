@@ -6,7 +6,7 @@
       <%next %>
     <%end %>
     <label>
-      <%=user['username'] %>
+      <%=h(user['username']) %>
       <br/>
       <input list="roles" type="text" value='<%=user['rolename']%>' name='<%=user['user_id'] %>'>
       <br/>

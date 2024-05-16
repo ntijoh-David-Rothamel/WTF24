@@ -1,16 +1,16 @@
 <form action="/users" method="post">
   <label for="name">Name:</label> <br>
   <input type="text" id="name" name="username" required>
-  <%if @password %>
-    <p>Could not find username</p>
-  <%end %>
   <br>
 
   <label for="password">Password:</label> <br>
   <input type="password" id="password" name="password" required>
-  <%if @password %>
-    <p>Wrong password</p>
+  <br>
+
+  <%if @login_failed %>
+    <p id='error'>Wrong username or password</p>
   <%end %>
+
   <br>
 
   <input type="submit" value="Submit">

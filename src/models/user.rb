@@ -2,6 +2,9 @@
 
 module User
   def self.new(params)
+    #This is not fool proof
+    # The username must be unique
+    # but it crasches now
     query = '
     INSERT INTO users
     (username, password, email)
@@ -59,10 +62,6 @@ module User
       puts 'works in mysterious ways'
       return user['id']
     else
-      puts 'wrong password'
-      p params['password']
-      p BCrypt::Password.new(user['password'])
-      p user['password']
       return 0
     end
   end
@@ -73,8 +72,6 @@ module User
     LEFT JOIN users_roles ON users.id = users_roles.user_id
     LEFT JOIN roles ON users_roles.role_id = roles.id
     WHERE users.id=?'
-
-    p id
 
     db.execute(query, id).first
   end
@@ -90,6 +87,28 @@ module User
     VALUES (?,?)'
 
     db.execute(query, user_id[0], 4)
+  end
+
+  def self.delete(username)
+    query_user = '
+    DELETE FROM users
+    WHERE username=?
+    returning id'
+
+    query_role = '
+    DELETE FROM users_roles
+    WHERE user_id=?'
+
+    begin
+      id = db.execute(query_user, username).first['id']
+    rescue => error
+      puts "#{username} does not exist"
+      return 0
+    end
+
+    puts "Shouldn't be here probably"
+    p id
+    db.execute(query_role, id)
   end
 
   def self.db

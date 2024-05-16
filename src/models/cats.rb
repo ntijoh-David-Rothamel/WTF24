@@ -10,23 +10,27 @@ module Cats
     query_casino_cats = '
     INSERT INTO casinos_cats
     (id_casino, id_cat)
-    VALUES (?,?)
-'
+    VALUES (?,?)'
+
+    query_get = '
+    SELECT id FROM cats
+    WHERE name_cats=?'
+
 
     begin
-      cat_id = db.execute(query, name)
-    rescue SQLException::ConstraintException
-      return nil
+      cat_id = db.execute(query_cats, name).first['id']
+    rescue => e
+      cat_id = db.execute(query_get, name).first['id']
     end
 
-    db.execute(id, cat_id)
+    db.execute(query_casino_cats, id, cat_id)
   end
 
-  def db
-    if db.nil?
-      db = SQLite3::Database.new('./db/db.sqlite')
-      db.results_as_hash = true
+  def self.db
+    if @db.nil?
+      @db = SQLite3::Database.new('./db/db.sqlite')
+      @db.results_as_hash = true
     end
-    return db
+    return @db
   end
 end

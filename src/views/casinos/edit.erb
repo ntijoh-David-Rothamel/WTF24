@@ -3,30 +3,30 @@ Use this as edit page as well
 -->
 
 <form action="/casinos" method="post">
-  <input type='hidden' name='id' value='<%=@casino['id'] %>'/>
+  <input type='hidden' name='id' value='<%=@casino[0]['id'] %>'/>
 
   <label>
   Kasino namn
     <br/>
-  <input type="text" name="casino_name" value="<%=@casino['name'] %>" required/>
+  <input id="casino_name" type="text" name="casino_name" value="<%=h(@casino[0]['name']) %>" required/>
     <br/>
   </label>
   <label>
     Vinst statistik
     <br/>
-    <input type="text" name="win_stats" value="<%=@casino['win_stats'] %>" required/>
+    <input id="win_stats" type="text" name="win_stats" value="<%=h(@casino[0]['win_stats']) %>" required/>
     <br/>
   </label>
   <label>
     Omsättningskrav
     <br/>
-    <input type="number" name="turnover" value="<%=@casino['turnover'] %>" required/>
+    <input id="turnover" type="number" name="turnover" value="<%=h(@casino[0]['turnover']) %>" required/>
     <br/>
   </label>
   <label>
     Logga som viss filtyp(Lista ut vilken)
     <br/>
-    <input type="text" name="logo_filepath" value="<%=@casino['logo_filepath'] %>" />
+    <input id="logo_filepath" type="text" name="logo_filepath" value="<%=h(@casino[0]['logo_filepath']) %>" />
     <br/>
   </label>
   <label>
@@ -35,18 +35,20 @@ Use this as edit page as well
     Ladda om sidan om man lägger till eller tar bort
     <br/>
     <% @casino.each do |casino| %>
-      <%=casino['name_cats'] %>
+      <%=h(casino['name_cats'])%>
 
       <br/>
     <% end %>
-    <input list="cats" type="text" name="cats" required/>
+    <input id="cats" list="cats" type="text" name="cats" required/>
     <br/>
   </label>
-  <button type="submit">Lägg till kasino</button>
+  <!--Av estetiska skäl?-->
+  <button type="submit">Lägg till label</button>
+  <button id="create_casino" type="submit">Lägg till kasino</button>
 </form>
 
 <datalist id="cats">
   <%@cats.each do |cat| %>
-    <option value="<%= cat['name_cats']%>"></option>
+    <option value="<%= h(cat['name_cats'])%>"></option>
   <% end %>
 </datalist>

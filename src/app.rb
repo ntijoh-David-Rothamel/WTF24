@@ -18,34 +18,42 @@ class App < Sinatra::Base
 
   before do
     @user = User.by_id(session[:user_id])
-    p 'in before'
-    p @user
   end
 
   get '/' do
     redirect '/casinos'
   end
 
+  #Used for making the cypress tests easier
   get '/test' do
+    User.delete('linus')
+    Casino.delete('då var det dags igen')
+
     erb :'/casinos/test'
   end
 
   get '/casinos' do
-    p @user
-
     @casinos = Casino.all
+    puts 'casinos'
+    p @casinos
 
     @casinos_cats = Casino.all_with_cats
+    puts 'casino_cats'
+    p @casinos_cats
 
     erb :'/casinos/index'
   end
 
   get '/casinos/new' do
-    @user = User.by_id(@user_id)
-
     @cats = Casino.all_cats
 
-    @casino = [{'id' => nil, 'name' => '', 'win_stats' => '', 'turn_over' => '', 'logo_filepath' => '', 'rating' => '' }]
+    @casino = [{ 'id' => nil,
+                 'name' => '',
+                 'win_stats' => '',
+                 'turn_over' => '',
+                 'logo_filepath' => '',
+                 'rating' => '',
+                 'name_cats' => nil }]
 
     erb :'/casinos/edit'
   end
@@ -60,6 +68,8 @@ class App < Sinatra::Base
 
   get '/casinos/:id/edit' do |id|
     @casino = Casino.by_id_with_cats(id)
+    puts 'casino'
+    p @casino
 
     @cats = Casino.all_cats
 
@@ -67,6 +77,11 @@ class App < Sinatra::Base
   end
 
   get '/users' do
+    erb :'/users/index'
+  end
+
+  get '/users/failed' do
+    @login_failed = true
     erb :'/users/index'
   end
 
@@ -93,6 +108,14 @@ class App < Sinatra::Base
     redirect '/users'
   end
 
+  before '/casinos' do
+    role = User.by_id(session[:user_id])
+
+    if request.request_method == 'POST' && (role.nil? || !role['write'])
+      redirect back
+    end
+  end
+
   post '/casinos' do
     id = Casino.update_or_create(params['id'], params)
 
@@ -101,85 +124,32 @@ class App < Sinatra::Base
     redirect "/casinos/#{id}/edit"
   end
 
-  post '/casinos' do
-    casino = params.dup
-    casino.delete('cats')
+  before '/reviews' do
+    role = User.by_id(session[:user_id])
 
-    #TODO should not require removal of submit
-    # Just remove value from submit
-    #casino.delete('submit')
-
-    casino_values = casino.values
-
-    #TODO set default values for rating and rev_amount to zero
-
-    check = Casino.select_at_name(casino['casino_name']).first
-
-    #TODO This logic should be put into the model
-
-    if check.nil?
-      casino_id = Casino.new_casino(casino_values).first
-    else
-      casino_values.delete_at(0)
-      casino_id = Casino.update_casino(casino_values, casino['casino_name']).first
+    if request.request_method == 'POST' && (role.nil? || !role['write'])
+      redirect back
     end
-
-    cats_id = Casino.select_cat_at_name(params['cats']).first
-
-    if cats_id.nil?
-      cats_id = Casino.new_cat(params['cats']).first
-    end
-
-    Casino.new_casino_cat(casino_id['id'], cats_id['id'])
-
-    redirect "/casinos/#{casino_id['id']}/edit"
   end
 
   post '/reviews' do
     Review.new(params.values)
 
     Casino.set_rating(params['parent'], params['stars'])
+
+    redirect back
   end
 
-  post '/reviews' do
-    values = params.values
-
-    query_get_rating =
-
-    rating_values = db.execute(query_get_rating).first
-
-    rating_values['rating'] = (rating_values['rating'].to_i * rating_values['rev_amount'].to_i + params['stars'].to_i) / (rating_values['rev_amount'].to_i + 1)
-
-    rating_values['rev_amount'] = 1 + rating_values['rev_amount'].to_i
-
-    Review.new(values)
-
-    db.execute(query_set_rating, rating_values['rating'], rating_values['rev_amount'], rating_values['id'])
-
-    redirect "/casinos/#{values[-1]}"
-  end
-
-  post '/users' do
+  post'/users' do
     #TODO Add response for wrong password or username
-    id = User.check(params)
+    user = User.check(params)
 
-    session[:user_id] = id
-    redirect '/'
-  end
-
-  post '/users' do
-    username = params['username']
-    clear_pass = params['password']
-
-    user = db.execute('SELECT * FROM users WHERE username = ?', username).first
-
-    pass_db = BCrypt::Password.new(user['password'])
-
-    if pass_db == clear_pass
-      session[:user_id] = user['id']
-      redirect "/"
+    if user != 0
+      session[:user_id] = user
+      redirect '/'
     else
-      redirect "/users"
+      sleep(1)
+      redirect '/users/failed'
     end
   end
 
@@ -189,57 +159,16 @@ class App < Sinatra::Base
     redirect '/users'
   end
 
-  post '/users/new' do
-    password = BCrypt::Password.create(params['password'])
+  before '/users/edit' do
+    role = User.by_id(session[:user_id])
 
-    query_user = '
-    INSERT INTO users
-    (username, password, email)
-    VALUES (?,?,?)
-    RETURNING id'
-
-    query_user_role = '
-    INSERT INTO users_roles
-    (user_id, role_id)
-    VALUES (?,?)'
-
-    user_id = db.execute(query_user, params['username'], password, params['email']).first
-
-    # Pray that I don't change the id of user
-    db.execute(query_user_role, user_id[0], 4)
-
-    redirect '/users'
+    if role.nil? || !role['role_change']
+      redirect back
+    end
   end
 
   post '/users/edit' do
     User.edit(params)
-  end
-
-  post '/users/edit' do
-    #TODO maybe download hole db just one time
-    # instead of loading just the id i need
-    # what is faster?
-
-    query_role = '
-    SELECT id FROM roles
-    WHERE rolename=?'
-
-    query_user_role = '
-    UPDATE users_roles
-    SET role_id=?
-    WHERE user_id=?'
-
-    p params
-
-    params.each do |role|
-      role_id = db.execute(query_role, role[1]).first
-
-      p role_id
-
-      db.execute(query_user_role, role_id['id'], role[0])
-    end
-
-    redirect '/users/edit'
   end
 
   def h(text)

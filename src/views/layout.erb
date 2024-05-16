@@ -9,20 +9,23 @@
 </head>
 <body>
     <header>
-        <!-- Add if cases depending on who is logged in-->
+        <!-- behövs ettan?-->
         <%if !@user.nil? && @user['role_change'].to_i == 1%>
             <a href="/users/edit">Admin stuff</a>
         <%end %>
-        <a>Account</a>
         <a href="/">Kasino jämförare</a>
-        <a href="/users">Log in</a>
-        <a href="/users/logout">Log out</a>
-        <a href="/users/new">Sign in</a>
-        <%if !@user.nil? && @user['make'].to_i == 1%>
-            <a href="/casinos/new">Add kasino</a>
+        <%if @user.nil? %>
+            <a href="/users/new">Sign in</a>
+            <a href="/users">Log in</a>
         <%end %>
         <%if !@user.nil? %>
-            <a>USER <%= @user['username'] %></a>
+            <a href="/users/logout">Log out</a>
+        <%end %>
+        <%if !@user.nil? && @user['make'].to_i == 1%>
+            <a id="layout_new_casino" href="/casinos/new">Add kasino</a>
+        <%end %>
+        <%if !@user.nil? %>
+            <a>USER: <%= h(@user['username']) %></a>
         <%end %>
     </header>
     <%= yield %>

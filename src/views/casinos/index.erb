@@ -1,17 +1,17 @@
 <% @casinos.each do |casino| %>
     <div class="casino">
-      <a href="/casinos/<%=casino['id'] %>"><%=casino['name'] %></a>
+      <a href="/casinos/<%=casino['id'] %>"><%=h(casino['name']) %></a>
       <% (0..casino['rating']).each do |_| %>
         <div class="star">
                 <p>star</p>
         </div>
       <% end %>
 
-      <img src="<%=casino['logo_filepath']%>" alt="<%=casino['name'] %>'s logo">
+      <img src="<%=h(casino['logo_filepath'])%>" alt="<%=h(casino['name']) %>'s logo">
 
       <% @casinos_cats[casino['id'].to_s].each do |cats| %>
         <div class="cats">
-          <p><%=cats %></p>
+          <p><%=h(cats) %></p>
         </div>
       <% end %>
       <%if !@user.nil? && @user['make'].to_i == 1%>

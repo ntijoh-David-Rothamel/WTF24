@@ -19,9 +19,9 @@ module Casino
       FROM casinos
       LEFT JOIN casinos_cats ON casinos.id = casinos_cats.id_casino
       LEFT JOIN cats ON casinos_cats.id_cat = cats.id
-      WHERE id_casino=?'
+      WHERE casinos.id=?'
 
-    db.execute(query, id).first
+    db.execute(query, id)
   end
 
   def self.all_with_cats
@@ -48,20 +48,16 @@ module Casino
     (name, win_stats, turnover, logo_filepath, rating, rev_amount)
     VALUES (?,?,?,?,?,?) RETURNING id'
 
+    values.pop
+    values.shift
     _values = values
     _values << 0
     _values << 0
 
-    db.execute(query, _values)
-  end
+    puts 'printing values'
+    p _values
 
-  def self.new_casino_cat(id_casino, id_cat)
-    query = '
-    INSERT INTO casinos_cats
-    (id_casino, id_cat)
-    VALUES (?,?)'
-
-    db.execute(query, id_casino, id_cat)
+    db.execute(query, _values).first['id']
   end
 
   def self.update_casino(values, name)
@@ -75,8 +71,13 @@ module Casino
   end
 
   def self.update_or_create(id, params)
-    if id.nil?
-      new_casino(params.values)
+    puts 'params'
+    p params
+    if id == ""
+      test = new_casino(params.values)
+      puts 'test'
+      p test
+      return test
     end
 
     list = []
@@ -85,7 +86,28 @@ module Casino
     list << params['turn_over']
     list << params['logo_filepath']
 
-    update_casino(list, params['casino_name'])
+    return update_casino(list, params['casino_name'])
+  end
+
+  def self.delete(casino_name)
+    casino_query = '
+    DELETE FROM casinos
+    WHERE name=?
+    returning id'
+
+    cats_query = '
+    DELETE FROM casinos_cats
+    WHERE id_casino=?'
+
+    begin
+      id = db.execute(casino_query, casino_name).first['id']
+    rescue => error
+      puts "#{casino_name} does not exist"
+      return 0
+    end
+
+    puts "should not be here"
+    db.execute(cats_query, id)
   end
 
   def self.set_rating(id, stars)

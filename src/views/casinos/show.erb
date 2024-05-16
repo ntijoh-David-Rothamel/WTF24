@@ -2,13 +2,13 @@
 Should show a little bit of casino info
 -->
 
-<h1><%=@casino['name'] %></h1>
+<h1><%=h(@casino['name']) %></h1>
 
 <p><%=@casino['id'] %></p>
 
 <p><%=@casino['rating'] %></p>
 
-<% if !@user.nil? && !!@user['write'] %>
+<% if !@user.nil? && @user['write']%>
   <form action="/reviews" method="post">
     <label>
       title
@@ -41,10 +41,10 @@ Should show a little bit of casino info
 <%end %>
 <% @reviews.each do |rev| %>
   <div>
-    <h3> <%= rev['title'] %></h3>
+    <h3> <%= h(rev['title']) %></h3>
     <% (0...rev['stars']).each do || %>
       *
     <% end %>
-    <p><%=rev['text'] %></p>
+    <p><%=h(rev['text']) %></p>
   </div>
 <% end %>
