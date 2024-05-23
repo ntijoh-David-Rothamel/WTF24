@@ -3,9 +3,9 @@ Should show a little bit of casino info
 -->
 
 <h1><%=h(@casino['name']) %></h1>
-
+<p>Casino id</p>
 <p><%=@casino['id'] %></p>
-
+<p>Casino rating</p>
 <p><%=@casino['rating'] %></p>
 
 <% if !@user.nil? && @user['write']%>

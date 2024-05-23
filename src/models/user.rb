@@ -51,7 +51,6 @@ module User
     begin
       user = db.execute(query, params['username']).first
     rescue SQLException::ConstraintException
-      puts 'wrong username'
       return 0
     end
 
@@ -59,7 +58,6 @@ module User
     #TODO Solve session cannot be in models
     # Varför för i helvete spelar det roll i vilken ordning den jäkla jämförelsen sker?
     if BCrypt::Password.new(user['password']) == params['password']
-      puts 'works in mysterious ways'
       return user['id']
     else
       return 0
@@ -102,7 +100,6 @@ module User
     begin
       id = db.execute(query_user, username).first['id']
     rescue => error
-      puts "#{username} does not exist"
       return 0
     end
 

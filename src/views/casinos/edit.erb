@@ -3,7 +3,7 @@ Use this as edit page as well
 -->
 
 <form action="/casinos" method="post">
-  <input type='hidden' name='id' value='<%=@casino[0]['id'] %>'/>
+  <input type='hidden' name='id' value='<%=@casino[0]['id_casino'] %>'/>
 
   <label>
   Kasino namn
@@ -45,6 +45,10 @@ Use this as edit page as well
   <!--Av estetiska skäl?-->
   <button type="submit">Lägg till label</button>
   <button id="create_casino" type="submit">Lägg till kasino</button>
+</form>
+<form action="/casinos/delete" method="post">
+  <input type=hidden name=id value=<%=@casino[0]['id_casino'] %>>
+  <button type=submit>Delete casino</button>
 </form>
 
 <datalist id="cats">

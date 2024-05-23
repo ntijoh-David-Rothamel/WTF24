@@ -34,12 +34,8 @@ class App < Sinatra::Base
 
   get '/casinos' do
     @casinos = Casino.all
-    puts 'casinos'
-    p @casinos
 
     @casinos_cats = Casino.all_with_cats
-    puts 'casino_cats'
-    p @casinos_cats
 
     erb :'/casinos/index'
   end
@@ -68,8 +64,6 @@ class App < Sinatra::Base
 
   get '/casinos/:id/edit' do |id|
     @casino = Casino.by_id_with_cats(id)
-    puts 'casino'
-    p @casino
 
     @cats = Casino.all_cats
 
@@ -82,6 +76,7 @@ class App < Sinatra::Base
 
   get '/users/failed' do
     @login_failed = true
+    sleep(5)
     erb :'/users/index'
   end
 
@@ -122,6 +117,22 @@ class App < Sinatra::Base
     Cats.new(params['cats'], id)
 
     redirect "/casinos/#{id}/edit"
+  end
+
+  before '/casinos/delete' do
+    role = User.by_id(session[:user_id])
+
+    if request.request_method == 'POST' && (role.nil? || !role['write'])
+      redirect back
+    end
+  end
+
+  post '/casinos/delete' do
+    #Deletes casino from db
+    puts 'im here!'
+    p params
+    Casino.delete_by_id(params['id'])
+    redirect '/'
   end
 
   before '/reviews' do
@@ -169,6 +180,8 @@ class App < Sinatra::Base
 
   post '/users/edit' do
     User.edit(params)
+
+    redirect back
   end
 
   def h(text)

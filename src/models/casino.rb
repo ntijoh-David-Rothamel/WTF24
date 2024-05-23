@@ -54,9 +54,6 @@ module Casino
     _values << 0
     _values << 0
 
-    puts 'printing values'
-    p _values
-
     db.execute(query, _values).first['id']
   end
 
@@ -71,12 +68,8 @@ module Casino
   end
 
   def self.update_or_create(id, params)
-    puts 'params'
-    p params
     if id == ""
       test = new_casino(params.values)
-      puts 'test'
-      p test
       return test
     end
 
@@ -86,7 +79,7 @@ module Casino
     list << params['turn_over']
     list << params['logo_filepath']
 
-    return update_casino(list, params['casino_name'])
+    return update_casino(list, params['casino_name']).first['id']
   end
 
   def self.delete(casino_name)
@@ -107,6 +100,28 @@ module Casino
     end
 
     puts "should not be here"
+    db.execute(cats_query, id)
+  end
+
+  def self.delete_by_id(id)
+    casino_query = '
+    DELETE FROM casinos
+    WHERE id=?'
+
+    cats_query = '
+    DELETE FROM casinos_cats
+    WHERE id_casino=?'
+
+    puts 'this is the id'
+    p id
+    begin
+      db.execute(casino_query, id)
+    rescue => error
+      puts 'it couldnt delete the casino'
+      p error
+      return 0
+    end
+
     db.execute(cats_query, id)
   end
 

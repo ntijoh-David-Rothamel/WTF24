@@ -22,7 +22,8 @@ module Cats
     rescue => e
       cat_id = db.execute(query_get, name).first['id']
     end
-
+    p id
+    p cat_id
     db.execute(query_casino_cats, id, cat_id)
   end
 
